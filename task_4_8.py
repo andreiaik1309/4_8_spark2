@@ -36,12 +36,14 @@ def main(year: int, month: int):
     
     # сформируем календарь с дискретностью 1 техническая неделя
     days_in_month = calendar.monthrange(year, month)[1]
-    data_days = [[i] for i in range(1, days_in_month + 1)]
-    pd_days = pd.DataFrame(data_days, columns = ['days'])
+    ind = pd.date_range(start=f'2023-{month}-1', end=f'2023-{month}-{days_in_month}') 
+    pd_days = pd.DataFrame(index=ind).reset_index().rename(columns={'index': 'date'})
+    pd_days['dow'] = pd_days['date'].dt.dayofweek
+    pd_days['days'] = pd_days['date'].dt.day
     pd_days['start_week'] = 'no'
-    pd_days.loc[pd_days['days'] % 7 - 1 == 0, 'start_week'] = 'yes'
+    pd_days.loc[(pd_days['dow'] == 0) | (pd_days['days'] == 1), 'start_week'] = 'yes'
     pd_days['end_week'] = 'no'
-    pd_days.loc[(pd_days['days'] % 7 == 0) | (pd_days['days'] == days_in_month ), 'end_week'] = 'yes'
+    pd_days.loc[(pd_days['dow'] == 6) | (pd_days['days'] == days_in_month ), 'end_week'] = 'yes'
     pd_week_calendar = pd_days.loc[pd_days['start_week'] == 'yes', ['days']]
     pd_week_calendar = pd_week_calendar.rename(columns={'days': 'day_start_week'}).reset_index(drop=True)
     pd_week_end = pd_days.loc[pd_days['end_week'] == 'yes', ['days']]
